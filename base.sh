@@ -1,17 +1,5 @@
 #!/usr/bin/env bash
-function enrich {
-    local flag=$1
-    local symbol=$2
-
-    local color_on=${3:-$omg_default_color_on}
-
-    if [[ $flag != true && $omg_use_color_off == false ]]; then symbol=' '; fi
-    if [[ $flag == true ]]; then local color=$color_on; else local color=$omg_default_color_off; fi
-
-    echo -n "${prompt}${color}${symbol}${reset} "
-}
-
-function get_current_action () {
+function __omg_get_current_action () {
     local info="$(git rev-parse --git-dir 2> /dev/null)"
     if [ -n "$info" ]; then
         local action
@@ -49,7 +37,7 @@ function get_current_action () {
     fi
 }
 
-function build_prompt {
+function __omg_build_prompt {
     local enabled=`git config --get oh-my-git.enabled 2> /dev/null`
     if [[ ${enabled} == false ]]; then
         echo "${PSORG}"
@@ -75,7 +63,7 @@ function build_prompt {
             if [[ -n "${upstream}" && "${upstream}" != "@{upstream}" ]]; then local has_upstream=true; fi
 
             local git_status="$(git status --porcelain 2> /dev/null)"
-            local action="$(get_current_action)"
+            local action="$(__omg_get_current_action)"
 
             if [[ $git_status =~ ($'\n'|^).M ]]; then local has_modifications=true; fi
             if [[ $git_status =~ ($'\n'|^)M ]]; then local has_modifications_cached=true; fi
@@ -130,19 +118,21 @@ function build_prompt {
                 local module_path=$(git -C "${toplevel}" config --file .gitmodules ${module}.path)
                 local module_branch=$(git -C "${toplevel}" config --file .gitmodules ${module}.branch)
                 if [ -z "${module_branch}" ]; then continue; fi
-                # spawn a background update of our cached information
-                (git -C "${toplevel}/${module_path}" remote update &) 1>/dev/null 2>/dev/null
                 # determine whether the branch is out of date (with cached data)
-                local branch_rev=$(git -C "${toplevel}/${module_path}" rev-parse origin/${module_branch})
-                local head_rev=$(git -C "${toplevel}/${module_path}" rev-parse HEAD)
-                if [[ "${head_rev}" != "${branch_rev}" ]]; then
-                    submodules_outdated=true;
-                fi
+		if [[ -d "${toplevel}/${module_path}/.git" ]];then
+			# spawn a background update of our cached information
+			(git -C "${toplevel}/${module_path}" remote update &) 1>/dev/null 2>/dev/null
+			local branch_rev=$(git -C "${toplevel}/${module_path}" rev-parse origin/${module_branch} 2> /dev/null)
+                	local head_rev=$(git -C "${toplevel}/${module_path}" rev-parse HEAD 2> /dev/null)
+			if [[ "${head_rev}" != "${branch_rev}" ]]; then
+			    submodules_outdated=true;
+			fi
+		fi
             done
         fi
     fi
 
-    echo "$(custom_build_prompt \
+    __omg_custom_build_prompt \
         ${enabled:-true} \
         ${current_commit_hash:-""} \
         ${is_a_git_repo:-false} \
@@ -158,7 +148,7 @@ function build_prompt {
         ${has_renames:-false} \
         ${has_untracked_files:-false} \
         ${ready_to_commit:-false} \
-        "${tags_at_current_commit:-""}" \
+        ${tags_at_current_commit:-""} \
         ${has_upstream:-false} \
         ${commits_ahead:-false} \
         ${commits_behind:-false} \
@@ -170,8 +160,7 @@ function build_prompt {
         ${bisect_total:-""} \
         ${bisect_steps:-""} \
         ${submodules_outdated:-false} \
-        ${action} \
-    )"
+        ${action}
 
 }
 
