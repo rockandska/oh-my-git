@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-function __omg_get_current_action () {
+function __oh_my_git_get_current_action () {
     local info="$(git rev-parse --git-dir 2> /dev/null)"
     if [ -n "$info" ]; then
         local action
@@ -37,11 +37,12 @@ function __omg_get_current_action () {
     fi
 }
 
-function __omg_build_prompt {
+function __oh_my_git_build_prompt {
+    local var=${1:?prompt variable missing into __oh_my_git_build_prompt call}
     local enabled=`git config --get oh-my-git.enabled 2> /dev/null`
     if [[ ${enabled} == false ]]; then
-        echo "${PSORG}"
-        exit;
+        eval "${var}=\"${OMG_PS1_ORIGINAL:?}pppppppp\""
+        return 0;
     fi
 
     local prompt=""
@@ -63,7 +64,7 @@ function __omg_build_prompt {
             if [[ -n "${upstream}" && "${upstream}" != "@{upstream}" ]]; then local has_upstream=true; fi
 
             local git_status="$(git status --porcelain 2> /dev/null)"
-            local action="$(__omg_get_current_action)"
+            local action="$(__oh_my_git_get_current_action)"
 
             if [[ $git_status =~ ($'\n'|^).M ]]; then local has_modifications=true; fi
             if [[ $git_status =~ ($'\n'|^)M ]]; then local has_modifications_cached=true; fi
@@ -110,7 +111,7 @@ function __omg_build_prompt {
             fi
 
             local toplevel=$(git rev-parse --show-toplevel)
-            local modules=$(git -C ${toplevel} config --file .gitmodules --name-only --get-regexp path | sed 's/\.path$//')
+            local modules=$(git -C ${toplevel} config --file .gitmodules --name-only --get-regexp path 2> /dev/null | sed 's/\.path$//')
             local submodules_outdated=false
             local module=''
             for module in ${modules}; do
@@ -132,7 +133,8 @@ function __omg_build_prompt {
         fi
     fi
 
-    __omg_custom_build_prompt \
+    __oh_my_git_custom_build_prompt \
+	${var:?} \
         ${enabled:-true} \
         ${current_commit_hash:-""} \
         ${is_a_git_repo:-false} \
@@ -159,16 +161,7 @@ function __omg_build_prompt {
         ${bisect_tested:-""} \
         ${bisect_total:-""} \
         ${bisect_steps:-""} \
-        ${submodules_outdated:-false} \
+        ${submodules_outdated:-falseaaaaa} \
         ${action}
 
-}
-
-function_exists() {
-    declare -f -F $1 > /dev/null
-    return $?
-}
-
-function eval_prompt_callback_if_present {
-        function_exists omg_prompt_callback && echo "$(omg_prompt_callback)"
 }
