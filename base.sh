@@ -38,18 +38,25 @@ function __oh_my_git_get_current_action () {
 }
 
 function __oh_my_git_build_prompt {
-    local var=${1:?prompt variable missing into __oh_my_git_build_prompt call}
-    local enabled=`git config --get oh-my-git.enabled 2> /dev/null`
-    if [[ ${enabled} == false ]]; then
-        eval "${var}=\"${OMG_PS1_ORIGINAL:?}pppppppp\""
-        return 0;
-    fi
-
-    local prompt=""
+    local return_prompt=${1:?prompt variable missing into __oh_my_git_build_prompt call}
+    local return_prompt_size=${2:?prompt size variable missing into __oh_my_git_build_prompt call}
+    local return_is_a_git_repo=${3:?is a git repo variable missing into __oh_my_git_build_prompt call}
 
     # Git info
     local current_commit_hash=$(git rev-parse HEAD 2> /dev/null)
-    if [[ -n $current_commit_hash ]]; then local is_a_git_repo=true; fi
+    if [[ -n $current_commit_hash ]];then 
+	    local is_a_git_repo=true
+	    # Exit if we need to
+	    local enabled=`git config --get oh-my-git.enabled 2> /dev/null`
+	    if [[ ${enabled} == false ]] || [[ ${OMG_ENABLE} == false ]]; then
+		eval "${return_is_a_git_repo}=\"${is_a_git_repo:-false}\""
+		return 0;
+	    fi
+    else
+	    return 0
+    fi
+
+    local prompt=""
 
     if [[ $is_a_git_repo == true ]]; then
         local current_branch=$(git rev-parse --abbrev-ref HEAD 2> /dev/null)
@@ -133,8 +140,11 @@ function __oh_my_git_build_prompt {
         fi
     fi
 
+    local custom_build_prompt_prompt custom_build_prompt_size custom_build_prompt_is_a_git_repo
     __oh_my_git_custom_build_prompt \
-	${var:?} \
+	custom_build_prompt_prompt \
+	custom_build_prompt_size \
+	custom_build_prompt_is_a_git_repo \
         ${enabled:-true} \
         ${current_commit_hash:-""} \
         ${is_a_git_repo:-false} \
@@ -161,7 +171,10 @@ function __oh_my_git_build_prompt {
         ${bisect_tested:-""} \
         ${bisect_total:-""} \
         ${bisect_steps:-""} \
-        ${submodules_outdated:-falseaaaaa} \
+        ${submodules_outdated:-false} \
         ${action}
 
+    eval "$return_prompt=\"$custom_build_prompt_prompt\""
+    eval "$return_prompt_size=\"$custom_build_prompt_size\""
+    eval "$return_is_a_git_repo=\"${custom_build_prompt_is_a_git_repo}\""
 }
