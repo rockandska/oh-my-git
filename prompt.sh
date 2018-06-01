@@ -354,7 +354,7 @@ __oh_my_git_init() {
 		_omg_build_prompt="\033[${_omg_fill_prompt_size_build_prompt}G${_omg_build_prompt}"
 	fi
 
-	eval "${_return_omg_prompt}=\"${_omg_build_prompt}\""
+	eval "${_return_omg_prompt}='${_omg_build_prompt}'"
 	eval "${_return_omg_prompt_size}=\"${_omg_size_build_prompt}\""
 	eval "${_return_omg_is_git_repo}=\"${_is_a_git_repo_build_prompt:=false}\""
 	eval "${_return_omg_fill_prompt_size}=\"${_omg_fill_prompt_size_build_prompt:=false}\""
@@ -390,7 +390,7 @@ __oh_my_git_display() {
 		local _ps1_prompt
 		_ps1_prompt="${_virtualenv:-}${OMG_PS1_ORIGINAL:?}"
 
-		if [[ ${OMG_IS_GIT_REPO:?} == true ]]; then
+		if [[ ${OMG_IS_GIT_REPO:?} == true ]] && [[ ${OMG_ENABLE} == true ]]; then
 			if [[ ${OMG_STATUS_BAR:?} == true ]];then
 				# Press return if we are on first line
 				[[ $(IFS=';' read -sdR -p $'\E[6n' ROW COL;echo "${ROW#*[}") -eq 1 ]] && echo -ne "\n"
@@ -448,14 +448,14 @@ oh_my_git_pureline() {
 		OMG_THEME["last_separator_bg"]="${bg_color}"
 		OMG_THEME["last_separator_color"]="${OMG_THEME["right_side_bg"]}"
 		__oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
-		if [[ "${OMG_PROMPT_SIZE}" -ne 0 ]];then
+		if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
 			PS1="${colors[${fg_color}]}${colors[On_${bg_color}]}$(printf "%$((${COLUMNS:=$(tput cols)} - 1))s" | tr ' ' "${fill_separator}")${colors[${bg_color}]}${colors['On_Default']}${symbols[hard_separator]}${OMG_PROMPT}\033[0G${PS1}"
 		else
 			PS1="${colors[${fg_color}]}${colors[On_${bg_color}]}$(printf "%$((${COLUMNS:=$(tput cols)} - 1))s" | tr ' ' "${fill_separator}")${colors[${bg_color}]}${colors['On_Default']}${symbols[hard_separator]}\033[0G${PS1}"
 		fi
 	else
 		__oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
-		if [[ "${OMG_PROMPT_SIZE}" -ne 0 ]];then
+		if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
 			PS1+=$(section_end ${OMG_THEME["left_side_color"]} ${OMG_THEME["left_side_bg"]})
 			OMG_PROMPT=${OMG_PROMPT%${OMG_THEME["omg_right_arrow_symbol"]}*}
 			PS1+=$(section_content $fg_color ${OMG_THEME["right_side_bg"]} "${OMG_PROMPT}\e[0m")
@@ -466,7 +466,6 @@ oh_my_git_pureline() {
 }
 
 oh_my_git() {
-
 	if [ -n "${BASH_VERSION:-}" ]; then
 
 		case "${1}" in
@@ -474,11 +473,11 @@ oh_my_git() {
 				__oh_my_git_load_config ${1-};
 				return 0;;
 			enable)
-				[[ ! $PROMPT_COMMAND =~ 'oh_my_git' ]] && PROMPT_COMMAND="$PROMPT_COMMAND; oh_my_git";
+				[[ ! $PROMPT_COMMAND =~ 'oh_my_git;' ]] && PROMPT_COMMAND="oh_my_git; $PROMPT_COMMAND";
 				return 0;;
 			disable)
 				PS1=${OMG_PS1_ORIGINAL};
-				PROMPT_COMMAND=${PROMPT_COMMAND/; oh_my_git/};
+				PROMPT_COMMAND=${PROMPT_COMMAND/oh_my_git; /};
 				return 0;;
 		esac
 

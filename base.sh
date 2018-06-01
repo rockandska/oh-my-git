@@ -49,6 +49,7 @@ function __oh_my_git_build_prompt {
 	    # Exit if we need to
 	    local enabled=`git config --get oh-my-git.enabled 2> /dev/null`
 	    if [[ ${enabled} == false ]] || [[ ${OMG_ENABLE} == false ]]; then
+		eval "${return_prompt}='${OMG_PS1_ORIGINAL:?}'"
 		eval "${return_is_a_git_repo}=\"${is_a_git_repo:-false}\""
 		return 0;
 	    fi
