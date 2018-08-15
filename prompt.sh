@@ -94,7 +94,7 @@ __oh_my_git_enrich_append() {
 		symbol="${symbol:-} "
 	fi
 	((omg_prompt_size+=${#symbol}))
-	__oh_my_git_add2array omg_prompt "${reset}\e[${attr};${color:-}${symbol:-}${reset}"
+	__oh_my_git_add2array omg_prompt "${reset}\[\e[${attr};${color:-}\]${symbol:-}${reset}"
 }
 
 __oh_my_git_reversearray() {
@@ -159,7 +159,7 @@ __oh_my_git_custom_build_prompt() {
 	local omg_prompt_size=0
 	local omg_is_a_git_repo=false
 
-	local reset='\e[0m'     # Text Reset]'
+	local reset='\[\e[0m\]'     # Text Reset]'
 
 	if [[ ${is_a_git_repo:?} == true ]]; then
 
@@ -444,25 +444,22 @@ oh_my_git_pureline() {
 	OMG_STATUS_BAR=false;
 
 
-	if [[ "$OMG_REVERSE" == true ]];then
-		OMG_THEME["last_separator_bg"]="${bg_color}"
-		OMG_THEME["last_separator_color"]="${OMG_THEME["right_side_bg"]}"
-		__oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
-		if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
-			PS1="${colors[${fg_color}]}${colors[On_${bg_color}]}$(printf "%$((${COLUMNS:=$(tput cols)} - 1))s" | tr ' ' "${fill_separator}")${colors[${bg_color}]}${colors['On_Default']}${symbols[hard_separator]}${OMG_PROMPT}\033[0G${PS1}"
-		else
-			PS1="${colors[${fg_color}]}${colors[On_${bg_color}]}$(printf "%$((${COLUMNS:=$(tput cols)} - 1))s" | tr ' ' "${fill_separator}")${colors[${bg_color}]}${colors['On_Default']}${symbols[hard_separator]}\033[0G${PS1}"
-		fi
-	else
-		__oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
-		if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
-			PS1+=$(section_end ${OMG_THEME["left_side_color"]} ${OMG_THEME["left_side_bg"]})
-			OMG_PROMPT=${OMG_PROMPT%${OMG_THEME["omg_right_arrow_symbol"]}*}
-			PS1+=$(section_content $fg_color ${OMG_THEME["right_side_bg"]} "${OMG_PROMPT}\e[0m")
-			__last_color=${OMG_THEME["right_side_bg"]}
-		fi
-		PS1="${colors[${fg_color}]}${colors[On_${bg_color}]}$(printf "%$((${COLUMNS:=$(tput cols)} - 1))s" | tr ' ' "${fill_separator}")${colors[${bg_color}]}${colors['On_Default']}${symbols[hard_separator]}\033[0G${PS1}"
-	fi
+        if [[ "$OMG_REVERSE" == true ]];then
+                OMG_THEME["last_separator_bg"]="${bg_color}"
+                OMG_THEME["last_separator_color"]="${OMG_THEME["right_side_bg"]}"
+                __oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
+                if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
+                        PS1+="$(section_end $__last_color ${bg_color})${OMG_PROMPT}"
+                fi
+        else
+                __oh_my_git_init OMG_PROMPT OMG_PROMPT_SIZE OMG_IS_GIT_REPO omg_fill_prompt_size
+                if [[ "${OMG_IS_GIT_REPO:?}" == true ]] && [[ ${OMG_ENABLE} == true ]];then
+                        PS1+="$(section_end ${OMG_THEME["left_side_color"]} ${OMG_THEME["left_side_bg"]})"
+			PS1+="$(section_content ${fg_color} ${bg_color} ${OMG_PROMPT})"
+                fi
+        fi
+        unset __last_color
+
 }
 
 oh_my_git() {
